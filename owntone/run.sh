@@ -40,7 +40,6 @@ if [ ! -f /data/etc/owntone.conf ]; then
 general {
     db_path = "/var/cache/owntone/database.db"
     loglevel = "info"
-    daemon = false
 }
 
 library {
