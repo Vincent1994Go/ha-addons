@@ -1,5 +1,5 @@
 name: "OwnTone"
-version: "1.0.6"
+version: "1.0.7"
 slug: "owntone"
 description: "OwnTone 是一个开源的媒体服务器，支持 AirPlay、Chromecast 和本地音频播放"
 url: "https://github.com/owntone/owntone-server"
