@@ -33,3 +33,7 @@ schema:
   uid: int
   gid: int
   log_level: list(debug|info|warning|error)
+build:
+  dockerfile: Dockerfile
+  args:
+    BUILD_FROM: ghcr.io/home-assistant/{arch}-base:latest

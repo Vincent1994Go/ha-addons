@@ -10,20 +10,21 @@ LOG_LEVEL=$(jq --raw-output '.log_level // "info"' $CONFIG_PATH)
 export UID=$UID
 export GID=$GID
 
-mkdir -p /etc/owntone
-mkdir -p /srv/media
-mkdir -p /var/cache/owntone
+mkdir -p /data/etc /data/media /data/cache
+chown -R $UID:$GID /data
+chmod -R 755 /data
 
-chown -R $UID:$GID /etc/owntone
-chown -R $UID:$GID /srv/media
-chown -R $UID:$GID /var/cache/owntone
-chmod -R 755 /etc/owntone
-chmod -R 755 /srv/media
-chmod -R 755 /var/cache/owntone
+mkdir -p /etc/owntone /srv/media /var/cache/owntone
 
-if [ ! -f /etc/owntone/owntone.conf ]; then
+ln -sf /data/etc /etc/owntone
+ln -sf /data/media /srv/media
+ln -sf /data/cache /var/cache/owntone
+
+chown -h $UID:$GID /etc/owntone /srv/media /var/cache/owntone
+
+if [ ! -f /data/etc/owntone.conf ]; then
     echo "创建默认配置文件..."
-    cat > /etc/owntone/owntone.conf << 'EOF'
+    cat > /data/etc/owntone.conf << 'EOF'
 general {
     db_path = "/var/cache/owntone/database.db"
     loglevel = "info"
@@ -59,15 +60,17 @@ webinterface {
 EOF
 fi
 
-chown $UID:$GID /etc/owntone/owntone.conf
-chmod 644 /etc/owntone/owntone.conf
+chown $UID:$GID /data/etc/owntone.conf
+chmod 644 /data/etc/owntone.conf
 
 echo "=== OwnTone Startup Debug Info ==="
 echo "UID: $UID, GID: $GID"
 echo "Directory permissions:"
+ls -la /data/
+ls -la /data/cache/
+ls -la /var/cache/owntone
 ls -la /etc/owntone/
-ls -la /var/cache/owntone/
-ls -la /srv/media/
 echo "==================================="
 
-exec /entrypoint.sh
+# 直接运行 OwnTone
+exec su-exec $UID:$GID /usr/bin/owntone
