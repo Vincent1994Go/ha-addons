@@ -6,9 +6,6 @@ CONFIG_PATH=/data/options.json
 UID=$(jq --raw-output '.uid // 1000' $CONFIG_PATH)
 GID=$(jq --raw-output '.gid // 1000' $CONFIG_PATH)
 
-export UID=$UID
-export GID=$GID
-
 echo "=== OwnTone Startup Debug Info ==="
 echo "UID: $UID, GID: $GID"
 
@@ -71,5 +68,12 @@ chmod 644 /data/etc/owntone.conf
 
 echo "==================================="
 
-# 启动 OwnTone
-exec /entrypoint.sh
+# 安装 su-exec 用于切换用户
+if ! command -v su-exec > /dev/null 2>&1; then
+    echo "Installing su-exec..."
+    apk add --no-cache su-exec
+fi
+
+# 直接运行 OwnTone
+echo "Starting OwnTone as UID $UID GID $GID..."
+exec su-exec $UID:$GID /usr/local/bin/owntone-server -c /etc/owntone/owntone.conf
