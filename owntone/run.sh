@@ -68,19 +68,6 @@ chmod 644 /data/etc/owntone.conf
 
 echo "==================================="
 
-# 查找 owntone-server 路径
-echo "Searching for owntone-server..."
-OWN_TONE_PATH=$(find / -name "owntone-server" 2>/dev/null | head -1)
-
-if [ -z "$OWN_TONE_PATH" ]; then
-    echo "ERROR: owntone-server not found!"
-    echo "Searching all executable files..."
-    find / -type f -executable -name "*owntone*" 2>/dev/null
-    exit 1
-fi
-
-echo "Found owntone-server at: $OWN_TONE_PATH"
-
 # 直接运行 OwnTone
-echo "Starting OwnTone directly..."
-exec $OWN_TONE_PATH -c /etc/owntone/owntone.conf
+echo "Starting OwnTone from /usr/sbin/owntone..."
+exec /usr/sbin/owntone -c /etc/owntone/owntone.conf
