@@ -49,14 +49,6 @@ library {
 mpd {
     port = 6600
 }
-
-daap {
-    port = 3689
-}
-
-webinterface {
-    port = 3688
-}
 EOF
 
 chown $UID:$GID /data/etc/owntone.conf

@@ -4,7 +4,7 @@ FROM docker.io/owntone/owntone:latest
 RUN apk add --no-cache jq
 
 # 缓存破坏层 - 每次更新版本时修改
-ARG BUILD_VERSION=1.0.17
+ARG BUILD_VERSION=1.0.18
 
 # 复制启动脚本
 COPY run.sh /run.sh
