@@ -68,12 +68,10 @@ chmod 644 /data/etc/owntone.conf
 
 echo "==================================="
 
-# 安装 su-exec 用于切换用户
-if ! command -v su-exec > /dev/null 2>&1; then
-    echo "Installing su-exec..."
-    apk add --no-cache su-exec
-fi
+# 检查 owntone-server 路径
+echo "Checking owntone-server path..."
+find / -name "owntone-server" 2>/dev/null
 
-# 直接运行 OwnTone
-echo "Starting OwnTone as UID $UID GID $GID..."
-exec su-exec $UID:$GID /usr/local/bin/owntone-server -c /etc/owntone/owntone.conf
+# 直接运行 OwnTone（不使用 su-exec）
+echo "Starting OwnTone directly..."
+exec /usr/local/bin/owntone-server -c /etc/owntone/owntone.conf
