@@ -1,0 +1,35 @@
+name: "OwnTone"
+version: "1.0.2"
+slug: "owntone"
+description: "OwnTone 是一个开源的媒体服务器，支持 AirPlay、Chromecast 和本地音频播放"
+url: "https://github.com/owntone/owntone-server"
+arch:
+  - amd64
+  - armhf
+  - armv7
+  - aarch64
+startup: services
+boot: auto
+init: false
+hassio_role: default
+host_network: true
+restart: always
+map:
+  - share:rw
+  - media:rw
+ports:
+  3688/tcp: 3688
+  3689/tcp: 3689
+  6600/tcp: 6600
+ports_description:
+  3688/tcp: "Web 界面端口"
+  3689/tcp: "DAAP 协议端口"
+  6600/tcp: "MPD 协议端口"
+options:
+  uid: 1000
+  gid: 1000
+  log_level: info
+schema:
+  uid: int
+  gid: int
+  log_level: list(debug|info|warning|error)

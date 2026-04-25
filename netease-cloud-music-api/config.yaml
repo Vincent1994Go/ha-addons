@@ -1,0 +1,33 @@
+name: "网易云音乐API"
+version: "1.0.0"
+slug: "netease_cloud_music_api"
+description: "网易云音乐第三方API服务"
+url: "https://github.com/neteasecloudmusicapienhanced/api-enhanced"
+arch:
+  - amd64
+  - armhf
+  - armv7
+  - aarch64
+init: false
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: "API服务端口"
+map:
+  - share:rw
+options:
+  cors_allow_origin: "*"
+  enable_proxy: false
+  proxy_url: "https://your-proxy-url.com/?proxy="
+  enable_general_unblock: true
+  enable_flac: true
+  select_max_br: false
+  follow_source_order: true
+schema:
+  cors_allow_origin: str
+  enable_proxy: bool
+  proxy_url: str
+  enable_general_unblock: bool
+  enable_flac: bool
+  select_max_br: bool
+  follow_source_order: bool

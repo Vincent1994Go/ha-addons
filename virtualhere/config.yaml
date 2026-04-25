@@ -1,0 +1,40 @@
+name: "VirtualHere USB Server"
+version: "1.2.0"
+slug: "virtualhere-server"
+description: "VirtualHere USB Server for Home Assistant - Share USB devices over the network"
+url: "https://www.virtualhere.com"
+arch:
+  - amd64
+  - armhf
+  - aarch64
+startup: services
+hassio_role: default
+boot: auto
+init: false
+privileged:
+  - SYS_ADMIN
+  - NET_ADMIN
+  - SYS_RAWIO
+devices:
+  - /dev/bus/usb
+  - /dev/usb
+options:
+  license_key: ""
+  server_name: "VirtualHere Server"
+  serial_number: ""
+schema:
+  license_key: str?
+  server_name: str
+  serial_number: str?
+ports:
+  7575/tcp: null
+ports_description:
+  7575/tcp: "VirtualHere Server Port"
+map:
+  - config:rw
+  - data:rw
+restart: always
+host_network: true
+environment:
+  TZ: Asia/Shanghai
+usb: true

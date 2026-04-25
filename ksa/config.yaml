@@ -1,0 +1,55 @@
+name: "KSA 看雪安全接入"
+version: "1.2.0"
+slug: "ksa"
+description: "KSA (Kanxue Secure Access) 看雪安全接入 - P2P内网穿透工具"
+url: "https://www.kanxue.com"
+arch:
+  - amd64
+startup: services
+boot: auto
+init: false
+privileged:
+  - NET_ADMIN
+options:
+  mode: server
+  ksa_uid: ""
+  password: "993745"
+  host: nat.kanxue.com
+  udp_port: 5000
+  dhcp_ip: 10.0.0.1
+  dhcp_mask: 255.255.255.0
+  dhcp_dns: 114.114.114.114
+  nat_nic: eth0
+  nat_tun: false
+  tun_name: ksa_tun
+  tun_ip: 10.0.0.2
+  fwd: 1
+  cipher: aes_256_cfb
+  route: ""
+schema:
+  mode: list(server|client)
+  ksa_uid: str?
+  password: str
+  host: str
+  udp_port: int
+  dhcp_ip: str
+  dhcp_mask: str
+  dhcp_dns: str
+  nat_nic: str
+  nat_tun: bool
+  tun_name: str
+  tun_ip: str
+  fwd: int
+  cipher: str
+  route: str?
+ports:
+  5000/udp: 5000
+ports_description:
+  5000/udp: "KSA UDP通信端口"
+map:
+  - config:rw
+  - data:rw
+host_network: true
+restart: always
+environment:
+  TZ: Asia/Shanghai
