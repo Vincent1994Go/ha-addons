@@ -33,10 +33,9 @@ ls -la /etc/owntone
 ls -la /var/cache/owntone
 ls -la /srv/media
 
-# 如果配置文件不存在，创建默认配置
-if [ ! -f /data/etc/owntone.conf ]; then
-    echo "Creating default configuration..."
-    cat > /data/etc/owntone.conf << 'EOF'
+# 强制创建新的配置文件，确保没有 daemon 选项
+echo "Creating fresh configuration file..."
+cat > /data/etc/owntone.conf << 'EOF'
 general {
     db_path = "/var/cache/owntone/database.db"
     loglevel = "info"
@@ -60,10 +59,13 @@ webinterface {
     port = 3688
 }
 EOF
-fi
 
 chown $UID:$GID /data/etc/owntone.conf
 chmod 644 /data/etc/owntone.conf
+
+# 显示配置文件内容
+echo "Configuration file content:"
+cat /data/etc/owntone.conf
 
 echo "==================================="
 
