@@ -33,7 +33,7 @@ ls -la /etc/owntone
 ls -la /var/cache/owntone
 ls -la /srv/media
 
-# 强制创建新的配置文件，确保没有 daemon 选项
+# 强制创建新的配置文件，确保没有无效选项
 echo "Creating fresh configuration file..."
 cat > /data/etc/owntone.conf << 'EOF'
 general {
@@ -44,7 +44,6 @@ general {
 library {
     directories = { "/srv/media" }
     filescan_disable = false
-    inotify = true
 }
 
 mpd {
