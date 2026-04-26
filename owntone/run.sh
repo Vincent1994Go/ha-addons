@@ -12,7 +12,7 @@ echo "UID: $UID, GID: $GID"
 # 创建必要的目录
 mkdir -p /data/etc /data/media /data/cache
 
-# 设置权限
+# 设置权限 - 确保所有者和组都正确
 chown -R $UID:$GID /data
 chmod -R 755 /data
 
@@ -63,6 +63,15 @@ echo "==================================="
 # 检查数据库目录权限
 echo "Checking database directory permissions..."
 ls -la /var/cache/owntone/
+
+# 如果数据库文件存在，确保权限正确
+if [ -f /var/cache/owntone/database.db ]; then
+    echo "Database file exists, fixing permissions..."
+    chown $UID:$GID /var/cache/owntone/database.db
+    chmod 644 /var/cache/owntone/database.db
+else
+    echo "Database file does not exist yet, will be created on first run"
+fi
 
 # 尝试启动 OwnTone
 echo "Starting OwnTone..."
