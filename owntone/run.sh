@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 CONFIG_PATH=/data/options.json
 
@@ -77,11 +76,26 @@ fi
 echo "Starting OwnTone..."
 
 # 方法：直接运行，不使用 OpenRC 服务
-echo "Starting OwnTone directly..."
+echo "Starting OwnTone directly with full error output..."
+
+# 尝试运行并捕获退出码
 /usr/sbin/owntone -c /etc/owntone/owntone.conf 2>&1 &
+OWNTONE_PID=$!
+
+echo "OwnTone started with PID: $OWNTONE_PID"
 
 # 等待几秒钟让进程启动
 sleep 5
+
+# 检查进程是否还在运行
+if kill -0 $OWNTONE_PID 2>/dev/null; then
+    echo "OwnTone process is still running (PID: $OWNTONE_PID)"
+else
+    echo "OwnTone process has exited!"
+    wait $OWNTONE_PID
+    EXIT_CODE=$?
+    echo "Exit code: $EXIT_CODE"
+fi
 
 # 检查进程状态
 echo "Checking OwnTone process status..."
@@ -91,5 +105,10 @@ ps aux | grep owntone || echo "No owntone process found"
 echo "Checking if database was created..."
 ls -la /var/cache/owntone/
 
-# 等待进程结束
-wait
+# 如果进程还在运行，等待它结束
+if kill -0 $OWNTONE_PID 2>/dev/null; then
+    echo "Waiting for OwnTone to finish..."
+    wait $OWNTONE_PID
+fi
+
+echo "OwnTone has exited"
