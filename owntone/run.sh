@@ -67,5 +67,19 @@ ls -la /var/cache/owntone/
 # 尝试以不同方式启动 OwnTone
 echo "Starting OwnTone from /usr/sbin/owntone..."
 
-# 使用 sh -c 来捕获所有输出
-exec sh -c "/usr/sbin/owntone -c /etc/owntone/owntone.conf 2>&1"
+# 方法1: 直接运行并捕获所有输出
+/usr/sbin/owntone -c /etc/owntone/owntone.conf 2>&1 &
+
+# 等待几秒钟让进程启动
+sleep 5
+
+# 检查进程状态
+echo "Checking OwnTone process status..."
+ps aux | grep owntone || echo "No owntone process found"
+
+# 检查端口监听
+echo "Checking port bindings..."
+netstat -tlnp 2>/dev/null || ss -tlnp 2>/dev/null || echo "Cannot check ports"
+
+# 等待进程结束
+wait
