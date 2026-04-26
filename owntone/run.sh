@@ -64,22 +64,31 @@ echo "==================================="
 echo "Checking database directory permissions..."
 ls -la /var/cache/owntone/
 
-# 尝试以不同方式启动 OwnTone
-echo "Starting OwnTone from /usr/sbin/owntone..."
+# 尝试启动 OwnTone
+echo "Starting OwnTone..."
 
-# 方法1: 直接运行并捕获所有输出
-/usr/sbin/owntone -c /etc/owntone/owntone.conf 2>&1 &
+# 方法：使用 OpenRC 服务启动
+if [ -f /etc/init.d/owntone ]; then
+    echo "Found OpenRC service, starting via OpenRC..."
+    # 确保配置文件路径正确
+    export OWNTONE_CONF=/etc/owntone/owntone.conf
+    # 启动服务
+    /sbin/openrc-run /etc/init.d/owntone start
+    # 等待服务启动
+    sleep 5
+    # 检查服务状态
+    /sbin/openrc-run /etc/init.d/owntone status
+else
+    echo "No OpenRC service found, starting directly..."
+    exec /usr/sbin/owntone -c /etc/owntone/owntone.conf
+fi
 
-# 等待几秒钟让进程启动
-sleep 5
-
-# 检查进程状态
-echo "Checking OwnTone process status..."
-ps aux | grep owntone || echo "No owntone process found"
-
-# 检查端口监听
-echo "Checking port bindings..."
-netstat -tlnp 2>/dev/null || ss -tlnp 2>/dev/null || echo "Cannot check ports"
-
-# 等待进程结束
-wait
+# 保持容器运行
+echo "OwnTone started, keeping container alive..."
+while true; do
+    sleep 10
+    # 定期检查服务状态
+    if [ -f /etc/init.d/owntone ]; then
+        /sbin/openrc-run /etc/init.d/owntone status || exit 1
+    fi
+done
