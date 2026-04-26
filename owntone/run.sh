@@ -60,6 +60,12 @@ cat /data/etc/owntone.conf
 
 echo "==================================="
 
-# 直接运行 OwnTone
+# 检查数据库目录权限
+echo "Checking database directory permissions..."
+ls -la /var/cache/owntone/
+
+# 尝试以不同方式启动 OwnTone
 echo "Starting OwnTone from /usr/sbin/owntone..."
-exec /usr/sbin/owntone -c /etc/owntone/owntone.conf
+
+# 使用 sh -c 来捕获所有输出
+exec sh -c "/usr/sbin/owntone -c /etc/owntone/owntone.conf 2>&1"
