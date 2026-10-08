@@ -1,0 +1,43 @@
+name: 闲鱼超级管家
+version: "3.2.0"
+slug: xianyu_super_butler
+description: >-
+  闲鱼多账号管理、自动回复、自动发货、自动评价一体化系统。
+  基于 ghcr.io/23star/xianyu-super-butler 预构建镜像，无需在本机编译。
+url: https://github.com/23Star/xianyu-super-butler
+arch:
+  - amd64
+  - aarch64
+init: false
+startup: application
+boot: auto
+stage: stable
+panel_icon: mdi:fish
+panel_title: 闲鱼超级管家
+webui: http://[HOST]:[PORT:8080]/
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: Web 管理界面
+options:
+  admin_username: admin
+  admin_password: admin123
+  timezone: Asia/Shanghai
+  log_level: INFO
+  auto_reply_enabled: true
+  auto_delivery_enabled: true
+  ai_reply_enabled: false
+  multiuser_enabled: true
+  user_registration_enabled: true
+  email_verification_enabled: true
+schema:
+  admin_username: str
+  admin_password: password
+  timezone: str
+  log_level: list(DEBUG|INFO|WARNING|ERROR)
+  auto_reply_enabled: bool
+  auto_delivery_enabled: bool
+  ai_reply_enabled: bool
+  multiuser_enabled: bool
+  user_registration_enabled: bool
+  email_verification_enabled: bool

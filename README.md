@@ -6,6 +6,7 @@ This repository contains Home Assistant Add-ons maintained by Vincent1994Go.
 
 - netease-cloud-music-api
 - phddns
+- xianyu_super_butler (闲鱼超级管家)
 
 ## Add this repository to Home Assistant
 
@@ -21,3 +22,4 @@ This repository contains Home Assistant Add-ons maintained by Vincent1994Go.
 
 - netease-cloud-music-api: https://github.com/neteasecloudmusicapienhanced/api-enhanced
 - phddns: https://www.oray.com/
+- xianyu_super_butler: https://github.com/23Star/xianyu-super-butler
