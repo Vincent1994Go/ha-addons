@@ -1,0 +1,41 @@
+name: 闲鱼自动回复
+version: "1.0.0"
+slug: xianyu_auto_reply
+description: >-
+  闲鱼多账号自动回复 / 自动发货 / 自动评价 / AI 回复一体化系统（全内置单容器）。
+  容器内已集成 MySQL、Redis、后端服务、WebSocket、定时任务与 Nginx 前端，
+  基于上游预构建镜像组装，无需在本机编译源码。
+url: https://github.com/zhinianboke/xianyu-auto-reply
+arch:
+  - amd64
+init: false
+startup: application
+boot: auto
+stage: stable
+panel_icon: mdi:fish
+panel_title: 闲鱼自动回复
+webui: http://[HOST]:[PORT:9000]/
+ports:
+  9000/tcp: 9000
+ports_description:
+  9000/tcp: Web 管理界面
+options:
+  timezone: Asia/Shanghai
+  log_level: INFO
+  mysql_password: "xianyu@2026"
+  redis_password: "xianyu@2026"
+  auto_start_websocket: true
+  auto_start_crawl_jobs: true
+  max_captcha_concurrent: 3
+  browser_headless: true
+schema:
+  timezone: str
+  log_level: list(DEBUG|INFO|WARNING|ERROR)
+  mysql_password: password
+  redis_password: password
+  auto_start_websocket: bool
+  auto_start_crawl_jobs: bool
+  max_captcha_concurrent: int(1,20)
+  browser_headless: bool
+backup: cold
+watchdog: tcp://[HOST]:[PORT:9000]

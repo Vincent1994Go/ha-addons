@@ -1,0 +1,4 @@
+# 复用上游预构建镜像作为 HA addon 的基础镜像，不在本机编译上游源码。
+# xianyu-backend-web 镜像已包含 Python 3.11、Playwright/Patchright 及 Chromium 运行时。
+build_from:
+  amd64: registry.cn-shanghai.aliyuncs.com/zhinian-software/xianyu-backend-web:latest
