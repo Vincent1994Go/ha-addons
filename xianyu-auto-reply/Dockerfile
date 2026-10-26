@@ -28,8 +28,9 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # ---------- MySQL Server（官方 APT 源，按 Debian 代号选择组件） ----------
-# 注意：MySQL 的签名密钥会定期轮换/过期（mysql-2023 已于 2025-10-22 过期），
-# 这里同时装入 2023 与 2025 两把公钥；若源仍校验失败则降级为 trusted=yes 继续安装。
+# 注意：MySQL 的签名密钥会定期轮换/过期（mysql-2023 已于 2025-10-22 过期，
+# mysql-2025 是同一主密钥的续签版本，有效期至 2029-10）。这里优先装入 2025，
+# 再附加 2023 作为兼容；若源仍校验失败则降级为 trusted=yes 继续安装。
 RUN set -eux; \
     . /etc/os-release; \
     if [ "${VERSION_CODENAME}" = "bookworm" ]; then \
@@ -40,9 +41,9 @@ RUN set -eux; \
     MYSQL_SOURCE="https://repo.mysql.com/apt/debian/ ${VERSION_CODENAME} ${MYSQL_COMPONENT}"; \
     install -d -m 0755 /usr/share/keyrings /tmp/mysql-keys; \
     : > /usr/share/keyrings/mysql.gpg; \
-    for v in 2023 2025; do \
-        if curl -fsSL "https://repo.mysql.com/RPM-GPG-KEY-mysql-${v}" -o "/tmp/mysql-keys/${v}.asc"; then \
-            gpg --dearmor --yes -o "/tmp/mysql-keys/${v}.gpg" "/tmp/mysql-keys/${v}.asc"; \
+    for v in 2025 2023; do \
+        if curl -fsSL "https://repo.mysql.com/RPM-GPG-KEY-mysql-${v}" -o "/tmp/mysql-keys/${v}.asc" \
+           && gpg --dearmor --yes -o "/tmp/mysql-keys/${v}.gpg" "/tmp/mysql-keys/${v}.asc"; then \
             cat "/tmp/mysql-keys/${v}.gpg" >> /usr/share/keyrings/mysql.gpg; \
         else \
             echo "[build] skip unavailable MySQL GPG key ${v}" >&2; \
