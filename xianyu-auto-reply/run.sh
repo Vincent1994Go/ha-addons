@@ -166,8 +166,7 @@ if [ "${need_bootstrap}" = "1" ]; then
            --datadir="${PERSIST_ROOT}/mysql" \
            --socket=/run/mysqld/mysqld-init.sock \
            --pid-file=/run/mysqld/mysqld-init.pid \
-           --skip-networking \
-           --log-error=/dev/stderr &
+           --skip-networking &
     BOOT_PID=$!
 
     for _ in $(seq 1 120); do
