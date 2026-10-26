@@ -1,5 +1,5 @@
 name: 闲鱼自动回复
-version: "1.0.2"
+version: "1.0.3"
 slug: xianyu_auto_reply
 description: >-
   闲鱼多账号自动回复 / 自动发货 / 自动评价 / AI 回复一体化系统（全内置单容器）。

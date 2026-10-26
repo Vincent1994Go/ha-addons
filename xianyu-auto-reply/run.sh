@@ -157,29 +157,53 @@ if [ "${need_bootstrap}" = "1" ]; then
     chown -R mysql:mysql "${PERSIST_ROOT}/mysql"
 
     if [ ! -d "${PERSIST_ROOT}/mysql/mysql" ]; then
+        # 上次初始化可能中途失败，留下半成品目录；--initialize-insecure 要求目录为空
+        if [ -n "$(ls -A "${PERSIST_ROOT}/mysql" 2>/dev/null)" ]; then
+            echo "[init] incomplete MySQL data directory found, cleaning up ..."
+            find "${PERSIST_ROOT}/mysql" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+        fi
         echo "[init] initializing MySQL data directory ..."
         mysqld --initialize-insecure --user=mysql --datadir="${PERSIST_ROOT}/mysql"
     fi
 
     echo "[init] bootstrapping database and user ..."
+    # 注意：上面 export 的 MYSQL_HOST 会被 mysql/mysqladmin 客户端当作默认主机，
+    # 一旦主机不是 localhost 客户端就会强制走 TCP 而忽略 --socket。因此这里用
+    # env -u 屏蔽相关变量，并用 --protocol=socket 强制走本地 socket。
+    BOOT_SOCK=/run/mysqld/mysqld-init.sock
+    BOOT_LOG=/tmp/mysql-bootstrap.log
+    : > "${BOOT_LOG}"
+
     mysqld --user=mysql \
            --datadir="${PERSIST_ROOT}/mysql" \
-           --socket=/run/mysqld/mysqld-init.sock \
+           --socket="${BOOT_SOCK}" \
            --pid-file=/run/mysqld/mysqld-init.pid \
-           --skip-networking &
+           --skip-networking \
+           --mysqlx=OFF >>"${BOOT_LOG}" 2>&1 &
     BOOT_PID=$!
 
+    boot_client() {
+        _prog="$1"
+        shift
+        env -u MYSQL_HOST -u MYSQL_TCP_PORT -u MYSQL_UNIX_PORT -u MYSQL_PWD \
+            "${_prog}" --protocol=socket --socket="${BOOT_SOCK}" --user=root "$@"
+    }
+
     for _ in $(seq 1 120); do
-        mysqladmin --socket=/run/mysqld/mysqld-init.sock ping >/dev/null 2>&1 && break
+        boot_client mysqladmin ping >/dev/null 2>&1 && break
+        if ! kill -0 "${BOOT_PID}" 2>/dev/null; then
+            break
+        fi
         sleep 1
     done
 
-    if ! mysqladmin --socket=/run/mysqld/mysqld-init.sock ping >/dev/null 2>&1; then
+    if ! boot_client mysqladmin ping >/dev/null 2>&1; then
         echo "[init] ERROR: MySQL failed to start for bootstrap" >&2
+        cat "${BOOT_LOG}" >&2 || true
         exit 1
     fi
 
-    mysql --socket=/run/mysqld/mysqld-init.sock -uroot <<SQL
+    boot_client mysql <<SQL
 CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_PASSWORD}';
 ALTER USER '${MYSQL_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_PASSWORD}';
@@ -190,9 +214,9 @@ GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
 
-    mysqladmin --socket=/run/mysqld/mysqld-init.sock -uroot shutdown || true
+    boot_client mysqladmin shutdown || true
     wait "${BOOT_PID}" 2>/dev/null || true
-    rm -f /run/mysqld/mysqld-init.sock /run/mysqld/mysqld-init.pid
+    rm -f "${BOOT_SOCK}" /run/mysqld/mysqld-init.pid "${BOOT_LOG}"
     printf '%s' "${MYSQL_PASSWORD}" > "${MYSQL_MARKER}"
 fi
 
