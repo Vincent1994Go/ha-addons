@@ -31,7 +31,7 @@
 | `redis_password` | password | `xianyu@2026` | 内置 Redis 密码 |
 | `auto_start_websocket` | bool | `true` | 启动时自动拉起 WebSocket 连接 |
 | `auto_start_crawl_jobs` | bool | `true` | 启动时自动恢复定时任务 |
-| `max_captcha_concurrent` | int(1,20) | `3` | 验证码并发处理上限 |
+| `max_captcha_concurrent` | int(1,20) | `1` | 验证码并发处理上限（每个并发对应一个 Chromium 进程，吃内存） |
 | `browser_headless` | bool | `true` | 浏览器无头模式 |
 
 > 修改 `mysql_password` 后重启加载项会自动重设数据库用户密码；
@@ -63,6 +63,40 @@ MySQL `3306`、Redis `6379`，均不对外暴露。
 - 架构：**仅 amd64**
 - 建议：**2 核 CPU / 4 GB 内存以上**（首次启动需初始化 MySQL，耗时较长属正常现象）
 - 磁盘：建议预留 5 GB 以上（镜像本身较大，含 Chromium 运行时）
+
+### 低配主机优化
+
+本加载项已针对低配主机做默认调优：MySQL 关闭 `performance_schema` 与 binlog、
+连接数上限 500、redo 每秒落盘；Redis 上限 128MB；Nginx 单 worker 且关闭访问日志；
+Python 进程设置 `MALLOC_ARENA_MAX=2` 抑制内存膨胀。
+
+如果仍然卡顿，按以下顺序调整（收益从大到小）：
+
+1. `max_captcha_concurrent` 保持 `1` —— 每增加 1 个并发就多一个 Chromium 进程（约 300MB）。
+2. 不需要商品采集/定时擦亮时，把 `auto_start_crawl_jobs` 设为 `false`，减少定时任务 CPU 占用。
+3. `log_level` 设为 `WARNING`，减少日志写盘与 HA 日志转发量。
+4. 关闭 `auto_start_websocket` 可再省一个浏览器进程，但会失去实时消息回复。
+5. 确认 HA 主机有 swap（至少 1GB），否则内存打满时 OOM Killer 会杀进程，表现就是系统整体卡死。
+
+### 精简模式（以自动发货为核心）
+
+从 `1.0.5` 起默认即为精简模式，只调整运行参数、不改变进程结构（仍是 6 个进程）：
+
+| 参数 | 值 | 作用 |
+| --- | --- | --- |
+| `log_level` | `WARNING` | 只输出告警与错误，减少日志开销 |
+| `auto_start_crawl_jobs` | `false` | 不自动启动商品采集类定时任务 |
+| `max_captcha_concurrent` | `1` | 最多 1 个 Chromium 进程处理验证码 |
+| `ENABLE_REMOTE_ADS` | `false` | 关闭远程广告拉取 |
+| `ENABLE_REMOTE_ANNOUNCEMENTS` | `false` | 关闭远程公告拉取 |
+| `ENABLE_REMOTE_POPUP_ANNOUNCEMENTS` | `false` | 关闭远程弹窗公告 |
+| `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` | `600` / `10` | 上游 pydantic 强制池上限不低于 600；溢流连接收敛到 10（原 150） |
+| `REDIS_POOL_SIZE` | `600` | 同上，上游强制不低于 600（原 800） |
+
+自动发货链路不受影响：付款消息由 websocket 进程实时处理，scheduler 只负责补发货、
+订单同步与 Cookie 续期。若想进一步省内存，可在 Web 界面「定时任务」中停用与发货无关的任务
+（采集、擦亮、监控、备份等），保留补发货、订单同步、Cookie 续期即可。
+
 
 ## 说明
 

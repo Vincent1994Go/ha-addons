@@ -1,5 +1,5 @@
 name: 闲鱼自动回复
-version: "1.0.3"
+version: "1.0.6"
 slug: xianyu_auto_reply
 description: >-
   闲鱼多账号自动回复 / 自动发货 / 自动评价 / AI 回复一体化系统（全内置单容器）。
@@ -21,12 +21,12 @@ ports_description:
   9000/tcp: Web 管理界面
 options:
   timezone: Asia/Shanghai
-  log_level: INFO
+  log_level: WARNING
   mysql_password: "xianyu@2026"
   redis_password: "xianyu@2026"
   auto_start_websocket: true
-  auto_start_crawl_jobs: true
-  max_captcha_concurrent: 3
+  auto_start_crawl_jobs: false
+  max_captcha_concurrent: 1
   browser_headless: true
 schema:
   timezone: str

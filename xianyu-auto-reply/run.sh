@@ -57,9 +57,11 @@ export REDIS_PORT=6379
 export REDIS_PASSWORD="${REDIS_PASSWORD:-xianyu@2026}"
 export REDIS_DB=0
 
-export DB_POOL_SIZE=800
-export DB_MAX_OVERFLOW=150
-export REDIS_POOL_SIZE=800
+# 精简模式：上游 pydantic 强制 DB_POOL_SIZE / REDIS_POOL_SIZE >= 600，不可再调低
+# 溢流连接调小到 10（原 150），实际按需创建
+export DB_POOL_SIZE=600
+export DB_MAX_OVERFLOW=10
+export REDIS_POOL_SIZE=600
 
 export HOST=0.0.0.0
 export BACKEND_WEB_PORT=8089
@@ -79,8 +81,8 @@ export STATIC_DIR=/app/static
 export BACKUP_DIR=/app/backups
 
 export AUTO_START_WEBSOCKET="${AUTO_START_WEBSOCKET:-true}"
-export AUTO_START_CRAWL_JOBS="${AUTO_START_CRAWL_JOBS:-true}"
-export MAX_CAPTCHA_CONCURRENT="${MAX_CAPTCHA_CONCURRENT:-3}"
+export AUTO_START_CRAWL_JOBS="${AUTO_START_CRAWL_JOBS:-false}"
+export MAX_CAPTCHA_CONCURRENT="${MAX_CAPTCHA_CONCURRENT:-1}"
 export BROWSER_HEADLESS="${BROWSER_HEADLESS:-true}"
 
 export CAPTCHA_DRISSIONPAGE_FALLBACK_ENABLED=false
@@ -93,13 +95,17 @@ export RATE_INTERVAL=20
 export CARD_DOCK_BASE_URL=http://backend.zhinianboke.com
 export EXTERNAL_API_KEY=zhinian_bk
 export REMOTE_OFFICIAL_BASE_URL=https://xy.zhinianboke.com
-export ENABLE_REMOTE_ADS=true
-export ENABLE_REMOTE_ANNOUNCEMENTS=true
-export ENABLE_REMOTE_POPUP_ANNOUNCEMENTS=true
+# 精简模式：关闭全部远程外呼（广告 / 公告 / 弹窗公告），避免无谓的网络请求与渲染
+export ENABLE_REMOTE_ADS=false
+export ENABLE_REMOTE_ANNOUNCEMENTS=false
+export ENABLE_REMOTE_POPUP_ANNOUNCEMENTS=false
 
 export PYTHONPATH=/app
 export PYTHONUNBUFFERED=1
 export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# 限制 glibc 内存池，避免 Python 多线程进程 RSS 虚高（低配主机上效果明显）
+export MALLOC_ARENA_MAX=2
 
 # ---------------- 3. 持久化目录 ----------------
 PERSIST_ROOT=/data/xianyu
@@ -135,7 +141,7 @@ port 6379
 daemonize no
 dir /data/xianyu/redis
 requirepass "${REDIS_PASSWORD}"
-maxmemory 256mb
+maxmemory 128mb
 maxmemory-policy allkeys-lru
 appendonly yes
 logfile ""
