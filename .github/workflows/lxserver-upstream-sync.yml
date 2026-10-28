@@ -1,0 +1,111 @@
+name: Sync upstream lxserver
+
+on:
+  schedule:
+    # 每天 03:00 UTC（北京时间 11:00）检查一次上游发布
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lxserver-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Check upstream release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve upstream release
+        id: upstream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            https://api.github.com/repos/XCQ0607/lxserver/releases/latest \
+            | jq -r '.tag_name // empty')
+          if [ -z "${tag}" ]; then
+            echo "::error::无法获取上游最新 release"
+            exit 1
+          fi
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${tag#v}" >> "${GITHUB_OUTPUT}"
+
+      - name: Read current version
+        id: current
+        run: |
+          set -euo pipefail
+          cur=$(sed -n 's/^version: *"\(.*\)"$/\1/p' lxserver/config.yaml | head -n1)
+          echo "version=${cur}" >> "${GITHUB_OUTPUT}"
+          echo "当前插件版本: ${cur}"
+
+      - name: Already up to date
+        if: steps.current.outputs.version == steps.upstream.outputs.version
+        run: echo "::notice::已是最新版本 v${{ steps.current.outputs.version }}，无需更新"
+
+      - name: Verify upstream image exists for all architectures
+        if: steps.current.outputs.version != steps.upstream.outputs.version
+        id: image
+        env:
+          VERSION: ${{ steps.upstream.outputs.version }}
+        run: |
+          set -euo pipefail
+          json=$(curl -fsSL "https://hub.docker.com/v2/repositories/xcq0607/lxserver/tags/${VERSION}") || {
+            echo "::error::Docker Hub 上还没有 v${VERSION} 镜像，本次跳过"
+            exit 1
+          }
+          arches=$(echo "${json}" | jq -r '[.images[]?.architecture] | unique | sort | join(",")')
+          echo "arches=${arches}" >> "${GITHUB_OUTPUT}"
+          echo "上游镜像架构: ${arches}"
+          for a in amd64 arm64 arm; do
+            case ",${arches}," in
+              *",${a},"*) ;;
+              *) echo "::error::上游 v${VERSION} 缺少 ${a} 架构镜像"; exit 1 ;;
+            esac
+          done
+
+      - name: Bump add-on version
+        if: steps.current.outputs.version != steps.upstream.outputs.version
+        env:
+          VERSION: ${{ steps.upstream.outputs.version }}
+          TAG: ${{ steps.upstream.outputs.tag }}
+        run: |
+          set -euo pipefail
+          sed -i -E 's/^version: *".*"$/version: "'"${VERSION}"'"/' lxserver/config.yaml
+          sed -i -E 's#(xcq0607/lxserver:)v[0-9]+\.[0-9]+\.[0-9]+#\1'"${TAG}"'#g' lxserver/build.yaml
+
+          {
+            echo "## ${VERSION}"
+            echo
+            echo "- 自动跟随上游发布，升级至 \`xcq0607/lxserver:${TAG}\`"
+            echo "- 上游发布说明：https://github.com/XCQ0607/lxserver/releases/tag/${TAG}"
+            echo "- 插件选项与环境变量的映射未做自动校验，若上游调整了配置项，请人工确认 \`lxserver/run.sh\`"
+            echo
+            cat lxserver/CHANGELOG.md
+          } > lxserver/CHANGELOG.md.tmp
+          mv lxserver/CHANGELOG.md.tmp lxserver/CHANGELOG.md
+
+      - name: Commit and push
+        if: steps.current.outputs.version != steps.upstream.outputs.version
+        env:
+          VERSION: ${{ steps.upstream.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lxserver/config.yaml lxserver/build.yaml lxserver/CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "::notice::没有实际改动，跳过提交"
+            exit 0
+          fi
+          git commit -m "chore(lxserver): bump upstream to v${VERSION}"
+          git push
+          echo "::notice::已升级到 v${VERSION}，Home Assistant 稍后会发现插件更新"
